@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Ultimate Movie Searcher",
+  "version": "1.6",
+  "permissions": ["contextMenus", "scripting"],
+  "host_permissions": [
+    "https://bt4gprx.com/*",
+    "https://yts.bz/*",
+    "https://www.imdb.com/*",
+    "https://subsource.net/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
