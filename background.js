@@ -38,14 +38,12 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       // تحويل الاسم المصفى إلى slug نظيف تماماً
       const titleSlug = titleUntilYear
         .toLowerCase()
-        .replace(/[^\w\s]/g, '')   // حذف كل الرموز والأقواس تماماً (بما فيها : و ( و ) )
-        .trim()                    // إزالة أي مسافات زائدة في الأطراف
+        .replace(/[^\w\s]/g, '')   // حذف كل الرموز والأقواس تماماً
+        .trim()                    // إزالة أي مسافات زائدة
         .replace(/\s+/g, '-');     // تحويل المسافات لشرطة واحدة فقط
       
-      // فتح الرابط المباشر النظيف (مثال: movies/avatar-fire-and-ash-2025)
       chrome.tabs.create({ url: `https://yts.bz/movies/${titleSlug}-${year}`, active: true });
     } else {
-      // حالة عدم وجود سنة: استخدام رابط الـ browse-movies العادي كاحتياط
       const query = encodeURIComponent(selectedText);
       chrome.tabs.create({ url: `https://yts.bz/browse-movies/${query}/all/all/0/latest/0/all`, active: true });
     }
@@ -59,8 +57,8 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 function openSubsource(text) {
   let cleanText = text.replace(/[\._]/g, ' ');
   
-  // تعبير نمطي للبحث عن صيغ المسلسلات
-  const tvMatch = cleanText.match(/(.*?)\s*[sS](\d+)\s*[eE]\d+/i) || cleanText.match(/(.*?)\s*Season\s*(\d+)/i);
+  // تعبير نمطي للبحث عن صيغ المسلسلات (الحلقة اختيارية هنا)
+  const tvMatch = cleanText.match(/(.*?)\s*\b[sS](\d+)(?:\s*[eE]\d+)?\b/i) || cleanText.match(/(.*?)\s*\bSeason\s*(\d+)\b/i);
   
   if (tvMatch) {
     // --- حالة المسلسل ---
@@ -103,7 +101,9 @@ function openSubsource(text) {
       const subsourceUrl = `https://subsource.net/subtitles/${titleSlug}-${year}`;
       chrome.tabs.create({ url: subsourceUrl, active: false });
     } else {
-      const titleSlug = cleanText
+      // تنظيف إضافي إذا لم تكن هناك سنة لحذف كلمات الجودة
+      let fallbackTitle = cleanText.split(/\b(720p|1080p|2160p|4k|webrip|bluray|x264|x265)\b/i)[0].trim();
+      const titleSlug = fallbackTitle
         .toLowerCase()
         .replace(/[^\w\s]/g, '')
         .trim()
