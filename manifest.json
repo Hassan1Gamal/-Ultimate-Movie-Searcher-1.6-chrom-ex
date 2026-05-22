@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Ultimate Movie Searcher",
   "version": "1.6",
-  "permissions": ["contextMenus", "scripting"],
+  "permissions": ["contextMenus", "scripting", "tabs"],
   "host_permissions": [
     "https://bt4gprx.com/*",
     "https://yts.bz/*",

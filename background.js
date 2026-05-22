@@ -49,13 +49,15 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     }
   }
 
-  // ثانياً: فتح رابط Subsource تلقائياً في الخلفية
+  // ثانياً: فتح رابط Subsource تلقائياً في الخلفية (مع منع التكرار)
   openSubsource(selectedText);
 });
 
 // دالة معالجة نص البحث وتوليد رابط Subsource
-function openSubsource(text) {
+// تم تحويلها إلى async لتتمكن من البحث في التابات المفتوحة
+async function openSubsource(text) {
   let cleanText = text.replace(/[\._]/g, ' ');
+  let subsourceUrl = ""; // متغير لتخزين الرابط النهائي
   
   // تعبير نمطي للبحث عن صيغ المسلسلات (الحلقة اختيارية هنا)
   const tvMatch = cleanText.match(/(.*?)\s*\b[sS](\d+)(?:\s*[eE]\d+)?\b/i) || cleanText.match(/(.*?)\s*\bSeason\s*(\d+)\b/i);
@@ -81,8 +83,7 @@ function openSubsource(text) {
       titleSlug = `${titleSlug}-${yearInTitleMatch[0]}`;
     }
 
-    const subsourceUrl = `https://subsource.net/subtitles/${titleSlug}/season-${seasonNumber}`;
-    chrome.tabs.create({ url: subsourceUrl, active: false });
+    subsourceUrl = `https://subsource.net/subtitles/${titleSlug}/season-${seasonNumber}`;
 
   } else {
     // --- حالة الفيلم ---
@@ -98,8 +99,7 @@ function openSubsource(text) {
         .trim()
         .replace(/\s+/g, '-');
         
-      const subsourceUrl = `https://subsource.net/subtitles/${titleSlug}-${year}`;
-      chrome.tabs.create({ url: subsourceUrl, active: false });
+      subsourceUrl = `https://subsource.net/subtitles/${titleSlug}-${year}`;
     } else {
       // تنظيف إضافي إذا لم تكن هناك سنة لحذف كلمات الجودة
       let fallbackTitle = cleanText.split(/\b(720p|1080p|2160p|4k|webrip|bluray|x264|x265)\b/i)[0].trim();
@@ -109,7 +109,20 @@ function openSubsource(text) {
         .trim()
         .replace(/\s+/g, '-');
       
-      const subsourceUrl = `https://subsource.net/subtitles/${titleSlug}`;
+      subsourceUrl = `https://subsource.net/subtitles/${titleSlug}`;
+    }
+  }
+
+  // --- التحقق من عدم وجود التاب مسبقاً ---
+  if (subsourceUrl) {
+    // جلب جميع التابات المفتوحة حالياً في المتصفح
+    const openTabs = await chrome.tabs.query({});
+    
+    // التحقق مما إذا كان هناك تاب يحمل نفس الرابط (استخدمنا startsWith لتجنب مشاكل العلامة / في نهاية الرابط)
+    const isTabAlreadyOpen = openTabs.some(tab => tab.url && tab.url.startsWith(subsourceUrl));
+
+    if (!isTabAlreadyOpen) {
+      // إذا لم يكن الرابط مفتوحاً، قم بفتحه في الخلفية
       chrome.tabs.create({ url: subsourceUrl, active: false });
     }
   }
